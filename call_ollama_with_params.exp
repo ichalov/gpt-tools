@@ -1,0 +1,51 @@
+#!/usr/bin/expect -f
+
+# Check if the correct number of arguments is provided
+if {[llength $argv] < 4} {
+    puts "Usage: $argv0 <file1> <file2> -- <command>"
+    exit 1
+}
+
+# Assign command-line arguments to variables
+set file1 [lindex $argv 0]
+set file2 [lindex $argv 1]
+set dashdash_index [lsearch $argv "--"]
+if {$dashdash_index != -1} {
+    set command [lrange $argv [expr {$dashdash_index + 1}] end]
+} else {
+    set command ""
+}
+
+# Open the first file for reading
+if {[catch {open $file1 r} fileId1]} {
+    puts "Error opening file1: $fileId1"
+    exit 1
+}
+
+# Read the entire second file into a variable
+if {[catch {set fileContent2 [exec cat $file2]} errorText]} {
+    puts "Error reading file2: $errorText"
+    close $fileId1
+    exit 1
+}
+
+# Start the command-line tool and wait for the prompt to appear (adjust the prompt pattern as necessary)
+spawn bash -c $command
+expect "*"
+
+set timeout 30
+
+# Read each line from the first file, send it to the tool, and wait for a response
+while {[gets $fileId1 line] >= 0} {
+    send "$line\r"
+    expect "*"
+}
+
+set timeout -1
+
+# Send the entire content of the second file
+send "$fileContent2\r"
+
+# Close the files and end the session
+close $fileId1
+expect eof
