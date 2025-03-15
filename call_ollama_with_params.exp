@@ -46,6 +46,9 @@ set timeout -1
 # Send the entire content of the second file
 send "$fileContent2\r"
 
+# Exit the session
+send "/bye\r"
+
 # Close the files and end the session
 close $fileId1
 expect eof
